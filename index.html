@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Pênalti Automático</title>
+<title>Pênalti com Goleiro Pulando</title>
 <style>
 body{
     margin:0;
@@ -36,12 +36,14 @@ let ball = {
 };
 
 let goalkeeper = {
+    baseX: 350,
     x: 350,
     y: 90,
     width: 100,
     height: 20,
-    targetX: 350,
-    speed: 6
+    jumping: false,
+    jumpProgress: 0,
+    targetSide: 0 // -1 esquerda | 1 direita
 };
 
 let score = 0;
@@ -57,16 +59,16 @@ canvas.addEventListener("mousedown", (e) => {
 
     let dx = targetX - ball.x;
     let dy = targetY - ball.y;
-
     let length = Math.sqrt(dx*dx + dy*dy);
 
     ball.vx = (dx/length) * 8;
     ball.vy = (dy/length) * 8;
-
     ball.moving = true;
 
-    // goleiro decide automaticamente onde pular
-    goalkeeper.targetX = targetX - goalkeeper.width/2;
+    // Decide lado do pulo
+    goalkeeper.targetSide = targetX < 400 ? -1 : 1;
+    goalkeeper.jumping = true;
+    goalkeeper.jumpProgress = 0;
 });
 
 // ===== DESENHO =====
@@ -126,18 +128,24 @@ function update(){
         }
     }
 
-    // Movimento automático do goleiro
-    if(goalkeeper.x < goalkeeper.targetX){
-        goalkeeper.x += goalkeeper.speed;
-    }
-    if(goalkeeper.x > goalkeeper.targetX){
-        goalkeeper.x -= goalkeeper.speed;
-    }
+    // ===== PULO DO GOLEIRO =====
+    if(goalkeeper.jumping){
+        goalkeeper.jumpProgress += 0.05;
 
-    // Limites do goleiro
-    if(goalkeeper.x < 250) goalkeeper.x = 250;
-    if(goalkeeper.x + goalkeeper.width > 550)
-        goalkeeper.x = 550 - goalkeeper.width;
+        // Movimento lateral
+        goalkeeper.x = goalkeeper.baseX + 
+                       goalkeeper.targetSide * 150 * goalkeeper.jumpProgress;
+
+        // Movimento vertical em arco
+        goalkeeper.y = 90 - 
+                       Math.sin(goalkeeper.jumpProgress * Math.PI) * 80;
+
+        if(goalkeeper.jumpProgress >= 1){
+            goalkeeper.jumping = false;
+            goalkeeper.x = goalkeeper.baseX;
+            goalkeeper.y = 90;
+        }
+    }
 }
 
 function resetBall(){
