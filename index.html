@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Super Pênaltis Realista</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    font-family:Arial, sans-serif;
+    background:linear-gradient(#4facfe,#00f2fe);
+}
+
+#campo{
+    position:relative;
+    width:100vw;
+    height:100vh;
+    background:linear-gradient(#2e8b57,#1f5f3f);
+}
+
+/* GOL */
+#gol{
+    position:absolute;
+    top:8%;
+    left:50%;
+    transform:translateX(-50%);
+    width:500px;
+    height:180px;
+    border:6px solid white;
+    border-bottom:none;
+}
+
+/* GOLEIRO REALISTA */
+#goleiro{
+    position:absolute;
+    top:14%;
+    left:50%;
+    width:80px;
+    height:160px;
+    transform:translateX(-50%);
+    transition:transform 0.6s cubic-bezier(.25,.8,.25,1);
+}
+
+/* SOMBRA */
+.sombra{
+    position:absolute;
+    bottom:-10px;
+    left:50%;
+    width:60px;
+    height:15px;
+    background:rgba(0,0,0,0.4);
+    border-radius:50%;
+    transform:translateX(-50%);
+}
+
+/* CABEÇA */
+.cabeca{
+    width:32px;
+    height:32px;
+    background:#f1c27d;
+    border-radius:50%;
+    margin:0 auto;
+}
+
+/* CORPO */
+.corpo{
+    width:40px;
+    height:55px;
+    background:#0057ff;
+    margin:0 auto;
+    border-radius:8px;
+}
+
+/* SHORT */
+.short{
+    width:40px;
+    height:25px;
+    background:#002f8a;
+    margin:0 auto;
+}
+
+/* BRAÇOS */
+.braco{
+    width:12px;
+    height:50px;
+    background:#f1c27d;
+    position:absolute;
+    top:40px;
+    border-radius:10px;
+}
+
+.braco.esq{ left:-12px; }
+.braco.dir{ right:-12px; }
+
+/* LUVAS */
+.luva{
+    width:16px;
+    height:16px;
+    background:white;
+    position:absolute;
+    border-radius:50%;
+    top:80px;
+}
+
+.luva.esq{ left:-20px; }
+.luva.dir{ right:-20px; }
+
+/* PERNAS */
+.perna{
+    width:14px;
+    height:50px;
+    background:black;
+    position:absolute;
+    bottom:15px;
+    border-radius:10px;
+}
+
+.perna.esq{ left:18px; }
+.perna.dir{ right:18px; }
+
+/* ANIMAÇÕES */
+.jump-left{
+    transform:translateX(-220px) translateY(30px) rotate(-20deg);
+}
+
+.jump-right{
+    transform:translateX(120px) translateY(30px) rotate(20deg);
+}
+
+/* BOLA */
+#bola{
+    position:absolute;
+    bottom:80px;
+    left:50%;
+    width:45px;
+    height:45px;
+    background:white;
+    border-radius:50%;
+    box-shadow:inset -5px -5px 10px rgba(0,0,0,0.3);
+    cursor:pointer;
+    transform:translateX(-50%);
+    transition:all 0.6s cubic-bezier(.17,.67,.83,.67);
+}
+
+/* PLACAR */
+#placar{
+    position:absolute;
+    top:20px;
+    left:20px;
+    font-size:22px;
+    color:white;
+}
+
+#mensagem{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:40px;
+    color:white;
+    display:none;
+}
+</style>
+</head>
+<body>
+
+<div id="campo">
+    <div id="placar">Pontos: 0</div>
+    <div id="mensagem"></div>
+    <div id="gol"></div>
+
+    <div id="goleiro">
+        <div class="cabeca"></div>
+        <div class="corpo"></div>
+        <div class="short"></div>
+        <div class="braco esq"></div>
+        <div class="braco dir"></div>
+        <div class="luva esq"></div>
+        <div class="luva dir"></div>
+        <div class="perna esq"></div>
+        <div class="perna dir"></div>
+        <div class="sombra"></div>
+    </div>
+
+    <div id="bola"></div>
+</div>
+
+<script>
+const bola = document.getElementById("bola");
+const goleiro = document.getElementById("goleiro");
+const placar = document.getElementById("placar");
+const mensagem = document.getElementById("mensagem");
+
+let pontos = 0;
+let chutes = 0;
+let startX = 0;
+let larguraTela = window.innerWidth;
+
+function iniciarChute(e){
+    const evento = e.touches ? e.touches[0] : e;
+    startX = evento.clientX;
+
+    document.addEventListener("mouseup", finalizarChute);
+    document.addEventListener("touchend", finalizarChute);
+}
+
+function finalizarChute(e){
+    document.removeEventListener("mouseup", finalizarChute);
+    document.removeEventListener("touchend", finalizarChute);
+
+    const evento = e.changedTouches ? e.changedTouches[0] : e;
+    const deltaX = evento.clientX - startX;
+    const destinoX = larguraTela/2 + deltaX;
+
+    chutes++;
+    const defesaAutomatica = (chutes % 4 === 0);
+
+    bola.style.bottom = "70%";
+    bola.style.left = destinoX + "px";
+    bola.style.transform = "translateX(-50%) scale(0.5)";
+
+    setTimeout(()=>{
+        verificarGol(destinoX, defesaAutomatica);
+        resetar();
+    },600);
+}
+
+function verificarGol(x, defesaAutomatica){
+    const golEsquerda = larguraTela/2 - 250;
+    const golDireita = larguraTela/2 + 250;
+
+    if(defesaAutomatica){
+        if(x < larguraTela/2){
+            goleiro.classList.add("jump-left");
+        } else {
+            goleiro.classList.add("jump-right");
+        }
+        mostrarMensagem("DEFESA!");
+    }
+    else if(x > golEsquerda && x < golDireita){
+        mostrarMensagem("GOOOOL!");
+        pontos += 10;
+    } 
+    else {
+        mostrarMensagem("Pra Fora!");
+    }
+
+    placar.innerText = "Pontos: " + pontos;
+
+    if(pontos >= 100){
+        mostrarMensagem("🏆 VOCÊ GANHOU!");
+        pontos = 0;
+        chutes = 0;
+    }
+}
+
+function resetar(){
+    setTimeout(()=>{
+        bola.style.transition="none";
+        bola.style.bottom="80px";
+        bola.style.left="50%";
+        bola.style.transform="translateX(-50%) scale(1)";
+        goleiro.classList.remove("jump-left");
+        goleiro.classList.remove("jump-right");
+
+        setTimeout(()=>{
+            bola.style.transition="all 0.6s cubic-bezier(.17,.67,.83,.67)";
+        },50);
+    },800);
+}
+
+function mostrarMensagem(texto){
+    mensagem.innerText = texto;
+    mensagem.style.display = "block";
+    setTimeout(()=> mensagem.style.display="none",1000);
+}
+
+bola.addEventListener("mousedown", iniciarChute);
+bola.addEventListener("touchstart", iniciarChute);
+
+window.addEventListener("resize", ()=>{
+    larguraTela = window.innerWidth;
+});
+</script>
+
+</body>
+</html>
